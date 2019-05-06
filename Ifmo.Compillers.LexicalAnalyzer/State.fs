@@ -168,7 +168,7 @@ let private getNextStateOf12 ch =
     else InvalidState
 
 let private getNextStateOf13 ch =
-    if ch |> isWhitespace then
+    if ch |> isIdEnd then
         Final(Tokens.id)
     elif ch |> isIdContinuation then
         State(13)
