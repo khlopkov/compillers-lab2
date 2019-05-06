@@ -11,39 +11,38 @@ let private getStateFromBuffer (buff:string): State =
     let charList = Seq.toList buff
     List.fold getNextState (State 0) charList 
 
-//TODO:
-//  try to use less mutability
-//  decompose
-let analyze (input: string): list<Token> = 
-    let mutable lexemeBegin = 0
-    let mutable forward = 0
-    let mutable state = State(0)
-    let mutable lexems = List.empty<Token>
+let private delWs str =
+    String.filter (fun ch ->
+        System.Char.IsWhiteSpace ch
+        |> Operators.not
+    ) str
+
+let private foldStringToLexems (str: string) =
+    let foldFun (
+                 state: State,
+                 lexems: list<Token>,
+                 buffer: string,
+                 lexemBegin: int,
+                 forward: int
+         ) (ch: char) =
+        let getState = getNextState state ch
+        match getState with  
+            | State(x) ->
+                (State(x), lexems, buffer + string ch, lexemBegin, forward+1)
+            | Final(t) ->
+                (getNextState (State 0) ch, List.append lexems [buffer |> delWs |> t],
+                 string ch, forward + 1, forward + 1)
+            | InvalidState ->
+                (InvalidState, lexems, "", lexemBegin, forward + 1)
+    str |> Seq.toList |> List.fold foldFun (State(0), List.empty<Token>, "", 0, 0)
+
+let analyze input =
     let inputWithWS = input + " "
-
-    let failMessage = 
-        sprintf "parse error at %i" lexemeBegin
-
-    do while forward <> inputWithWS.Length+1 do
-        let forwardBuffer = inputWithWS.[lexemeBegin..forward-1]
-            
-        do state <- getStateFromBuffer forwardBuffer
-        do match state with
-            | State(x) -> 
-                if inputWithWS.Length = forward && x <> 0 then
-                    failwith failMessage
-                else
-                    forward <- forward + 1
-
-            | Final t ->
-                let createToken (t: CreateAttributeToken) =
-                    let buffer = inputWithWS.[lexemeBegin..forward-1]
-                    let delWhiteSpaces str = 
-                        let notWs = System.Char.IsWhiteSpace >> Operators.not
-                        String.filter notWs str
-                    t (delWhiteSpaces buffer)
-                lexems <- List.append lexems [createToken t]
-                do lexemeBegin <- forward 
-
-            | InvalidState -> failwith failMessage
-    lexems
+    let (state, lexems, buffer, lastSuccessfulLexem, _) = foldStringToLexems inputWithWS
+    match state with
+        | State(x) ->
+            if x <> 0 then
+                failwith <| sprintf "error at %i" lastSuccessfulLexem
+            else
+                lexems
+        | _ -> failwith <| sprintf "error at %i" lastSuccessfulLexem

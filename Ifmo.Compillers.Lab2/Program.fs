@@ -10,7 +10,18 @@ let tokenListToString (list: list<Token>) =
 
 [<EntryPoint>]
 let main argv =
-    let tokens = Analyzer.analyze "Begin End. Var kek"
+    let tokens = Analyzer.analyze "
+        Begin
+        End.
+        Var
+        IF
+        kek
+        kek-kek
+        kek - kek
+        kek*kek
+        kek * kek
+        kek ** kek
+    "
     printfn "%A" <| tokenListToString tokens
     Console.ReadKey()
     0 // return an integer exit code
