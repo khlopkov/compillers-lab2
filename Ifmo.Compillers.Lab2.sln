@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ifmo.Compillers.Lab2", "Ifmo.Compillers.Lab2\Ifmo.Compillers.Lab2.fsproj", "{A0FB4061-4B45-4E94-9827-7AC6EAD8DEAD}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ifmo.Compillers.LexicalAnalyzer", "Ifmo.Compillers.LexicalAnalyzer\Ifmo.Compillers.LexicalAnalyzer.fsproj", "{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A0FB4061-4B45-4E94-9827-7AC6EAD8DEAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0FB4061-4B45-4E94-9827-7AC6EAD8DEAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0FB4061-4B45-4E94-9827-7AC6EAD8DEAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0FB4061-4B45-4E94-9827-7AC6EAD8DEAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
