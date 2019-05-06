@@ -28,30 +28,33 @@ let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState 
             |> Operators.not) 
     let state = getNextState st.state ch
     match state with
-        | State(x) -> {
-             state = State x;
+        | State(x) ->
+             {state = State x;
              lexems = st.lexems;
              forwardBuff = st.forwardBuff + string ch;
              lexemBegin = st.lexemBegin;
              forward=st.forward+1}
-        | Final(t) -> {
-             state=getNextState (State 0) ch;
+        | Final(t) ->
+             {state= 0 |> State |> getNextState <| ch;
              lexems = List.append st.lexems [st.forwardBuff |> delWs |> t];
              forwardBuff = string ch;
              lexemBegin = st.forward + 1;
              forward = st.forward + 1}
-        | InvalidState -> {
-             state=InvalidState;
+        | InvalidState ->
+             {state=InvalidState;
              lexems = st.lexems;
              forwardBuff = "";
              lexemBegin = st.lexemBegin;
              forward = st.forward + 1}
             
 let private foldStringWithAnalyzer (str: string) =
-   Seq.toList str |>
-   List.fold
-       getNextAnalyzerState
-       {state = State(0); lexems = List.empty<Token>; forwardBuff = ""; lexemBegin = 0; forward = 0}
+   Seq.toList str 
+   |> List.fold getNextAnalyzerState
+        {state = State 0;
+        lexems = List.empty<Token>;
+        forwardBuff = "";
+        lexemBegin = 0;
+        forward = 0}
        
 let private analysisResult onSuccess onError (resState: AnalyzerState) =
     let err = onError resState.lexemBegin
