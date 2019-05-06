@@ -10,7 +10,7 @@ let tokenListToString (list: list<Token>) =
 
 [<EntryPoint>]
 let main argv =
-    let tokens = Analyzer.analyze "
+    let res = Analyzer.analyze "
         Begin
         End.
         Var
@@ -22,6 +22,10 @@ let main argv =
         kek * kek
         kek ** kek
     "
-    printfn "%A" <| tokenListToString tokens
-    Console.ReadKey()
+    match res with
+        | Analyzer.SuccessResult(tokens) ->
+            tokens |> tokenListToString |> printfn "%A" 
+        | Analyzer.FailedAt(failurePos) ->
+            printfn "failed at position %d" failurePos
+    Console.ReadKey() |> ignore
     0 // return an integer exit code

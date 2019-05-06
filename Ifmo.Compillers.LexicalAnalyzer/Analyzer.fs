@@ -11,38 +11,64 @@ let private getStateFromBuffer (buff:string): State =
     let charList = Seq.toList buff
     List.fold getNextState (State 0) charList 
 
-let private delWs str =
-    String.filter (fun ch ->
-        System.Char.IsWhiteSpace ch
-        |> Operators.not
-    ) str
 
-let private foldStringToLexems (str: string) =
-    let foldFun (
-                 state: State,
-                 lexems: list<Token>,
-                 buffer: string,
-                 lexemBegin: int,
-                 forward: int
-         ) (ch: char) =
-        let getState = getNextState state ch
-        match getState with  
-            | State(x) ->
-                (State(x), lexems, buffer + string ch, lexemBegin, forward+1)
-            | Final(t) ->
-                (getNextState (State 0) ch, List.append lexems [buffer |> delWs |> t],
-                 string ch, forward + 1, forward + 1)
-            | InvalidState ->
-                (InvalidState, lexems, "", lexemBegin, forward + 1)
-    str |> Seq.toList |> List.fold foldFun (State(0), List.empty<Token>, "", 0, 0)
+type private AnalyzerState = {
+     state: State;
+     lexems: list<Token>;
+     forwardBuff: string;
+     lexemBegin: int;
+     forward: int
+ }
+
+let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState = 
+    let delWs str =
+        str |> String.filter (fun ch ->
+            ch 
+            |> System.Char.IsWhiteSpace 
+            |> Operators.not) 
+    let state = getNextState st.state ch
+    match state with
+        | State(x) -> {
+             state = State x;
+             lexems = st.lexems;
+             forwardBuff = st.forwardBuff + string ch;
+             lexemBegin = st.lexemBegin;
+             forward=st.forward+1}
+        | Final(t) -> {
+             state=getNextState (State 0) ch;
+             lexems = List.append st.lexems [st.forwardBuff |> delWs |> t];
+             forwardBuff = string ch;
+             lexemBegin = st.forward + 1;
+             forward = st.forward + 1}
+        | InvalidState -> {
+             state=InvalidState;
+             lexems = st.lexems;
+             forwardBuff = "";
+             lexemBegin = st.lexemBegin;
+             forward = st.forward + 1}
+            
+let private foldStringWithAnalyzer (str: string) =
+   Seq.toList str |>
+   List.fold
+       getNextAnalyzerState
+       {state = State(0); lexems = List.empty<Token>; forwardBuff = ""; lexemBegin = 0; forward = 0}
+       
+let private analysisResult onSuccess onError (resState: AnalyzerState) =
+    let err = onError resState.lexemBegin
+    match resState.state with
+        | State(x) ->
+            if x <> 0 then
+                err
+            else
+                onSuccess resState.lexems
+        | _ -> err
+    
+type AnalysisResult =
+    | SuccessResult of list<Token> 
+    | FailedAt of int
 
 let analyze input =
     let inputWithWS = input + " "
-    let (state, lexems, buffer, lastSuccessfulLexem, _) = foldStringToLexems inputWithWS
-    match state with
-        | State(x) ->
-            if x <> 0 then
-                failwith <| sprintf "error at %i" lastSuccessfulLexem
-            else
-                lexems
-        | _ -> failwith <| sprintf "error at %i" lastSuccessfulLexem
+    let resultState = foldStringWithAnalyzer inputWithWS
+    analysisResult SuccessResult FailedAt resultState
+
