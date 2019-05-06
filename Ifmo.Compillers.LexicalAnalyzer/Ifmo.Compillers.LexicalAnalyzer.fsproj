@@ -5,7 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Compile Include="Token.fs" />
+      <Compile Include="Tokens.fs" />
+      <Compile Include="State.fs" />
     </ItemGroup>
 
 </Project>
