@@ -1,7 +1,5 @@
 ﻿module Ifmo.Compillers.LexicalAnalyzer.Analyzer
 
-//TODO add comments deletion
-
 open Ifmo.Compillers.LexicalAnalyzer.Tokens
 open Ifmo.Compillers.LexicalAnalyzer.State
 open System
@@ -12,15 +10,11 @@ type TokenWithPosition = {
     position: int * int;
 } with
     member this.ToString =
+        let strToken = tokenToStr this.token
         match this.position with
-            | (row, col) -> this.token.ToString + "[" + row.ToString() + ":" + col.ToString() + "]"
+            | (row, col) -> sprintf "%s [%d:%d]" strToken row col
 
 type Analyze = string -> list<TokenWithPosition>
-
-let private getStateFromBuffer (buff:string): State = 
-    let charList = Seq.toList buff
-    List.fold getNextState (State 0) charList 
-
 
 type private AnalyzerState = {
      state: State;

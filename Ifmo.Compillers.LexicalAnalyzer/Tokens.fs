@@ -1,38 +1,50 @@
 module Ifmo.Compillers.LexicalAnalyzer.Tokens
 
-type Token = {name: string; attribute: Option<string>} with
-    member this.ToString =
-        let concatPostfix postfix = "<" + this.name + postfix
-        match this.attribute with
-            | None -> concatPostfix ">"
-            | _ -> ", " + this.attribute.Value + ">" |> concatPostfix
-    
-let private tokenWithoutAttr tokenName = { name=tokenName; attribute=None }
+type Token = 
+    | Begin
+    | End  
+    | Var
+    | If
+    | Assign
+    | Equal
+    | Greater
+    | Less
+    | Plus
+    | Minus
+    | Mul
+    | Div
+    | Pow
+    | Not
+    | OpenBracket
+    | CloseBracket
+    | Id of string
+    | Const of int
 
-type CreateAttributeToken = string -> Token
+ type TokenWithAttr = string -> Token
 
-let begin' _  = tokenWithoutAttr "begin"
-let end' _  = tokenWithoutAttr "end"
-let var _ = tokenWithoutAttr "var"
-let if' _ = tokenWithoutAttr "if"
+let tokenToTokenWithAttr (t: Token): TokenWithAttr =
+    match t with
+        | Id _ -> Id
+        | Const _ -> int >> Const
+        | _ -> fun _ -> t
 
-let assign _ = tokenWithoutAttr "assign"
-
-let equal _ = tokenWithoutAttr "eq"
-let greater _ = tokenWithoutAttr "gt"
-let less _  = tokenWithoutAttr "less"
-
-let plus _  = tokenWithoutAttr "plus"
-let minus _  = tokenWithoutAttr "minus"
-let mul _  = tokenWithoutAttr "mul"
-let div _  = tokenWithoutAttr "div"
-
-let pow _  = tokenWithoutAttr "pow"
-let not _  = tokenWithoutAttr "not"
-
-let openBracket _  = tokenWithoutAttr "open-bracket"
-let closeBracket _  = tokenWithoutAttr "close-bracket"
-
-
-let id idName = { name="id"; attribute=Some(idName) }
-let const' val' = { name="const"; attribute=Some(val') }
+let tokenToStr (t: Token) =
+    match t with 
+        | Begin -> "<begin>"
+        | End -> "<end>"
+        | Var -> "<var>"
+        | If -> "<if>"
+        | Assign -> "<assign>"
+        | Equal -> "<equal>"
+        | Greater -> "<greater>"
+        | Less -> "<less>"
+        | Plus -> "<plus>"
+        | Minus -> "<minus>"
+        | Mul -> "<mul>"
+        | Div -> "<div>"
+        | Pow -> "<pow>"
+        | Not -> "<not>"
+        | OpenBracket -> "<open_bracket>"
+        | CloseBracket -> "<close_bracket>"
+        | Id name -> sprintf "<id, %s>" name
+        | Const value -> sprintf "<const, 0x%08X>" value

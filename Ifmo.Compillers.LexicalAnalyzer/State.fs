@@ -32,7 +32,10 @@ let private isIdContinuation ch =
 let private isOperationEnd ch =
     ch |> isWhitespace || ch |> isLetter || ch |> isDigit
 
-type State = State of int | Final of Tokens.CreateAttributeToken | InvalidState | Comment
+type State = State of int | Final of Tokens.TokenWithAttr | InvalidState | Comment
+
+let private tokenToFinalState = 
+    tokenToTokenWithAttr >> Final
 
 let private getNextStateOf0 ch = 
     match ch with
@@ -65,7 +68,7 @@ let private getNextStateOf1 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf2 ch = 
@@ -75,7 +78,7 @@ let private getNextStateOf2 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf3 ch = 
@@ -85,7 +88,7 @@ let private getNextStateOf3 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf4 ch = 
@@ -95,12 +98,12 @@ let private getNextStateOf4 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf5 ch = 
     if ch |> isWhitespace then 
-        Final(Tokens.begin')
+        tokenToFinalState Tokens.Begin
     elif ch |> isIdContinuation then
         State(13)
     else InvalidState
@@ -112,7 +115,7 @@ let private getNextStateOf6 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf7 ch = 
@@ -122,7 +125,7 @@ let private getNextStateOf7 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf8 ch = 
@@ -132,12 +135,12 @@ let private getNextStateOf8 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf9 ch = 
     if ch |> isWhitespace then
-        Final(end')
+        Final(tokenToTokenWithAttr End)
     else InvalidState
 
 let private getNextStateOf10 ch = 
@@ -147,7 +150,7 @@ let private getNextStateOf10 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf11 ch = 
@@ -157,32 +160,32 @@ let private getNextStateOf11 ch =
             if ch |> isIdContinuation then
                 State(13)
             elif ch |> isIdEnd then
-                Final(Tokens.id)
+                Final(Tokens.Id)
             else InvalidState
 
 let private getNextStateOf12 ch = 
     if ch |> isWhitespace then 
-        Final(Tokens.if')
+        tokenToFinalState Tokens.If
     elif ch |> isIdContinuation then
         State(13)
     else InvalidState
 
 let private getNextStateOf13 ch =
     if ch |> isIdEnd then
-        Final(Tokens.id)
+        Final(Tokens.Id)
     elif ch |> isIdContinuation then
         State(13)
     else InvalidState
 
 let private getNextStateOfOperation token ch =
     if ch |> isOperationEnd then
-        Final(token)
+        tokenToFinalState token
     else InvalidState
 
 let private getNextStateOf14 ch =
     if ch = '=' then
         State(27)
-    else ch |> getNextStateOfOperation Tokens.assign
+    else getNextStateOfOperation Token.Assign ch
 
 let private getNextStateOf16 ch = 
     if ch = 'F' then
@@ -190,12 +193,12 @@ let private getNextStateOf16 ch =
     elif ch |> isIdContinuation then
         State(13)
     elif ch |> isIdEnd then
-        Final(Tokens.id)
+        Final(Tokens.Id)
     else InvalidState
 
 let private getNextStateOf17 ch =
     if ch |> isWhitespace || ch = '(' then
-        Final(Tokens.if')
+        Tokens.tokenToTokenWithAttr >> Final <| Tokens.If
     elif ch |> isIdContinuation then
         State(13)
     else InvalidState
@@ -203,44 +206,44 @@ let private getNextStateOf17 ch =
 let private getNextStateOf18 ch =
     if ch = '*' then
         State(24)
-    else ch |> getNextStateOfOperation Tokens.mul
+    else ch |> getNextStateOfOperation Tokens.Mul
 
 let private getNextStateOf19 ch =
     if ch |> isDigit then
         State(19)
     elif ch |> isWhitespace || ch |> isOperationSign then
-        Final(Tokens.const')
+        Tokens.Const >> tokenToFinalState <| 0
     else InvalidState
 
 let private getNextStateOf20 ch = 
-    ch |> getNextStateOfOperation Tokens.openBracket
+    ch |> getNextStateOfOperation Tokens.OpenBracket
 
 let private getNextStateOf21 ch = 
-    ch |> getNextStateOfOperation Tokens.closeBracket
+    ch |> getNextStateOfOperation Tokens.CloseBracket
 
 let private getNextStateOf22 ch = 
-    ch |> getNextStateOfOperation Tokens.minus
+    ch |> getNextStateOfOperation Tokens.Minus
 
 let private getNextStateOf23 ch = 
-    ch |> getNextStateOfOperation Tokens.plus
+    ch |> getNextStateOfOperation Tokens.Plus
 
 let private getNextStateOf24 ch = 
-    ch |> getNextStateOfOperation Tokens.pow
+    ch |> getNextStateOfOperation Tokens.Pow
 
 let private getNextStateOf25 ch = 
-    ch |> getNextStateOfOperation Tokens.greater
+    ch |> getNextStateOfOperation Tokens.Greater
 
 let private getNextStateOf26 ch = 
-    ch |> getNextStateOfOperation Tokens.less
+    ch |> getNextStateOfOperation Tokens.Less
 
 let private getNextStateOf27 ch = 
-    ch |> getNextStateOfOperation Tokens.equal
+    ch |> getNextStateOfOperation Tokens.Equal
 
 let private getNextStateOf28 ch = 
     if ch = '/' then
         Comment
     else 
-        ch |> getNextStateOfOperation Tokens.div
+        ch |> getNextStateOfOperation Tokens.Div
 
 type GetNextState = State -> char -> State
 
