@@ -4,8 +4,18 @@
 
 open Ifmo.Compillers.LexicalAnalyzer.Tokens
 open Ifmo.Compillers.LexicalAnalyzer.State
+open System
 
-type Analyze = string -> list<Token>
+
+type TokenWithPosition = {
+    token: Token;
+    position: int * int;
+} with
+    member this.ToString =
+        match this.position with
+            | (row, col) -> this.token.ToString + "[" + row.ToString() + ":" + col.ToString() + "]"
+
+type Analyze = string -> list<TokenWithPosition>
 
 let private getStateFromBuffer (buff:string): State = 
     let charList = Seq.toList buff
@@ -14,50 +24,66 @@ let private getStateFromBuffer (buff:string): State =
 
 type private AnalyzerState = {
      state: State;
-     lexems: list<Token>;
+     lexems: list<TokenWithPosition>;
      forwardBuff: string;
-     lexemBegin: int;
-     forward: int
+     lexemeBeginPosition: int * int;
+     forwardPosition: int* int;
  }
 
 let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState = 
-    let delWs str =
-        str |> String.filter (fun ch ->
-            ch 
-            |> System.Char.IsWhiteSpace 
-            |> Operators.not) 
     let state = getNextState st.state ch
+    let addToForwardBuff =
+        if ch |> Char.IsWhiteSpace then
+            st.forwardBuff
+        else
+            st.forwardBuff + string ch
+    let getNextPosition = 
+        match st.forwardPosition with (row, col) ->
+            if ch = '\n' then
+                (row + 1, 1)
+            else 
+                (row, col + 1)
     match state with
         | State(x) ->
-             {state = State x;
-             lexems = st.lexems;
-             forwardBuff = st.forwardBuff + string ch;
-             lexemBegin = st.lexemBegin;
-             forward=st.forward+1}
+            let getLexemeBeginPosition = 
+                if x = 0 && ch |> Char.IsWhiteSpace then
+                    st.forwardPosition;
+                else 
+                    st.lexemeBeginPosition;
+            {state = State x;
+            lexems = st.lexems;
+            forwardBuff = addToForwardBuff;
+            lexemeBeginPosition = getLexemeBeginPosition;
+            forwardPosition = getNextPosition}
         | Final(t) ->
+             let refreshForwardBuff = 
+                if ch |> Char.IsWhiteSpace then
+                    ""
+                else 
+                    string ch;
              {state= 0 |> State |> getNextState <| ch;
-             lexems = List.append st.lexems [st.forwardBuff |> delWs |> t];
-             forwardBuff = string ch;
-             lexemBegin = st.forward + 1;
-             forward = st.forward + 1}
+             lexems = List.append st.lexems [{token = st.forwardBuff |> t; position = st.lexemeBeginPosition}];
+             forwardBuff = refreshForwardBuff;
+             lexemeBeginPosition = getNextPosition;
+             forwardPosition = getNextPosition}
         | InvalidState ->
              {state=InvalidState;
              lexems = st.lexems;
              forwardBuff = "";
-             lexemBegin = st.lexemBegin;
-             forward = st.forward + 1}
+             lexemeBeginPosition = st.lexemeBeginPosition;
+             forwardPosition = getNextPosition}
             
 let private foldStringWithAnalyzer (str: string) =
    Seq.toList str 
    |> List.fold getNextAnalyzerState
         {state = State 0;
-        lexems = List.empty<Token>;
+        lexems = List.empty<TokenWithPosition>;
         forwardBuff = "";
-        lexemBegin = 0;
-        forward = 0}
+        lexemeBeginPosition = (1, 1);
+        forwardPosition = (1, 1)}
        
 let private analysisResult onSuccess onError (resState: AnalyzerState) =
-    let err = onError resState.lexemBegin
+    let err = onError resState.lexemeBeginPosition
     match resState.state with
         | State(x) ->
             if x <> 0 then
@@ -67,8 +93,8 @@ let private analysisResult onSuccess onError (resState: AnalyzerState) =
         | _ -> err
     
 type AnalysisResult =
-    | SuccessResult of list<Token> 
-    | FailedAt of int
+    | SuccessResult of list<TokenWithPosition> 
+    | FailedAt of int * int
 
 let analyze input =
     let inputWithWS = input + " "
