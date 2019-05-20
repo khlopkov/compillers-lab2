@@ -19,24 +19,21 @@ type Analyze = string -> list<TokenWithPosition>
 type private AnalyzerState = {
      state: State;
      lexems: list<TokenWithPosition>;
-     forwardBuff: string;
+     currentLexeme: string;
      lexemeBeginPosition: int * int;
      forwardPosition: int* int;
  }
 
 let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState = 
     let state = getNextState st.state ch
-    let addToForwardBuff =
+    let addToCurrentLexeme =
         if ch |> Char.IsWhiteSpace then
-            st.forwardBuff
+            st.currentLexeme
         else
-            st.forwardBuff + string ch
+            st.currentLexeme + string ch
     let getNextPosition = 
-        match st.forwardPosition with (row, col) ->
-            if ch = '\n' then
-                (row + 1, 1)
-            else 
-                (row, col + 1)
+        match st.forwardPosition 
+            with (row, col) -> if ch = '\n' then (row + 1, 1) else (row, col + 1)
     match state with
         | State(x) ->
             let getLexemeBeginPosition = 
@@ -46,30 +43,30 @@ let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState 
                     st.lexemeBeginPosition;
             {state = State x;
             lexems = st.lexems;
-            forwardBuff = addToForwardBuff;
+            currentLexeme = addToCurrentLexeme;
             lexemeBeginPosition = getLexemeBeginPosition;
             forwardPosition = getNextPosition}
         | Comment ->
             {state = Comment;
             lexems = st.lexems;
-            forwardBuff = "";
+            currentLexeme = "";
             lexemeBeginPosition = getNextPosition;
             forwardPosition = getNextPosition}
         | Final(t) ->
-             let refreshForwardBuff = 
+             let refreshCurrentLexeme = 
                 if ch |> Char.IsWhiteSpace then
                     ""
                 else 
                     string ch;
              {state= 0 |> State |> getNextState <| ch;
-             lexems = List.append st.lexems [{token = st.forwardBuff |> t; position = st.lexemeBeginPosition}];
-             forwardBuff = refreshForwardBuff;
+             lexems = List.append st.lexems [{token = st.currentLexeme |> t; position = st.lexemeBeginPosition}];
+             currentLexeme = refreshCurrentLexeme;
              lexemeBeginPosition = getNextPosition;
              forwardPosition = getNextPosition}
         | InvalidState ->
              {state=InvalidState;
              lexems = st.lexems;
-             forwardBuff = "";
+             currentLexeme = "";
              lexemeBeginPosition = st.lexemeBeginPosition;
              forwardPosition = getNextPosition}
             
@@ -78,7 +75,7 @@ let private foldStringWithAnalyzer (str: string) =
    |> List.fold getNextAnalyzerState
         {state = State 0;
         lexems = List.empty<TokenWithPosition>;
-        forwardBuff = "";
+        currentLexeme = "";
         lexemeBeginPosition = (1, 1);
         forwardPosition = (1, 1)}
        

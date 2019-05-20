@@ -21,6 +21,7 @@ let main argv =
         kek*kek
         kek * kek
         kek ** kek
+        kek = 5
     """
     match res with
         | Analyzer.SuccessResult(tokens) ->
