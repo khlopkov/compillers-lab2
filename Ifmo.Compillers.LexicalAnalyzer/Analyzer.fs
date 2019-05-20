@@ -55,6 +55,12 @@ let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState 
             forwardBuff = addToForwardBuff;
             lexemeBeginPosition = getLexemeBeginPosition;
             forwardPosition = getNextPosition}
+        | Comment ->
+            {state = Comment;
+            lexems = st.lexems;
+            forwardBuff = "";
+            lexemeBeginPosition = getNextPosition;
+            forwardPosition = getNextPosition}
         | Final(t) ->
              let refreshForwardBuff = 
                 if ch |> Char.IsWhiteSpace then

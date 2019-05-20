@@ -32,7 +32,7 @@ let private isIdContinuation ch =
 let private isOperationEnd ch =
     ch |> isWhitespace || ch |> isLetter || ch |> isDigit
 
-type State = State of int | Final of Tokens.CreateAttributeToken | InvalidState
+type State = State of int | Final of Tokens.CreateAttributeToken | InvalidState | Comment
 
 let private getNextStateOf0 ch = 
     match ch with
@@ -237,7 +237,10 @@ let private getNextStateOf27 ch =
     ch |> getNextStateOfOperation Tokens.equal
 
 let private getNextStateOf28 ch = 
-    ch |> getNextStateOfOperation Tokens.div
+    if ch = '/' then
+        Comment
+    else 
+        ch |> getNextStateOfOperation Tokens.div
 
 type GetNextState = State -> char -> State
 
@@ -276,6 +279,11 @@ let getNextState state ch =
 
     match state with
         | State x -> matchNumberedState x ch 
+        | Comment ->
+            if ch = '\n' then
+                State 0
+            else 
+                Comment
         | Final _ -> InvalidState
         | InvalidState -> state 
 

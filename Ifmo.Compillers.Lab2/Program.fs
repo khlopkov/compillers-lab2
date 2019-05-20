@@ -11,7 +11,7 @@ let tokenListToString (list: list<TokenWithPosition>) =
 [<EntryPoint>]
 let main argv =
     let res = Analyzer.analyze """
-        Begin
+        Begin // fsdajfdkasjfklaj
         End.
         Var
         IF
