@@ -17,6 +17,8 @@ type Token =
     | Not
     | OpenBracket
     | CloseBracket
+    | LineBreak
+    | Coma
     | Id of string
     | Const of int
 
@@ -46,5 +48,7 @@ let tokenToStr (t: Token) =
         | Not -> "<not>"
         | OpenBracket -> "<open_bracket>"
         | CloseBracket -> "<close_bracket>"
+        | LineBreak -> "<line_break>"
+        | Coma -> "<coma>"
         | Id name -> sprintf "<id, %s>" name
         | Const value -> sprintf "<const, 0x%08X>" value

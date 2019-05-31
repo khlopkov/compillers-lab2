@@ -22,6 +22,7 @@ type private AnalyzerState = {
      currentLexeme: string;
      lexemeBeginPosition: int * int;
      forwardPosition: int* int;
+     symbolsTable: Map<string, Tokens.Token>;
  }
 
 let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState = 
@@ -45,13 +46,15 @@ let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState 
             lexems = st.lexems;
             currentLexeme = addToCurrentLexeme;
             lexemeBeginPosition = getLexemeBeginPosition;
-            forwardPosition = getNextPosition}
+            forwardPosition = getNextPosition;
+            symbolsTable = st.symbolsTable}
         | Comment ->
             {state = Comment;
             lexems = st.lexems;
             currentLexeme = "";
             lexemeBeginPosition = getNextPosition;
-            forwardPosition = getNextPosition}
+            forwardPosition = getNextPosition;
+            symbolsTable = st.symbolsTable}
         | Final(t) ->
              let refreshCurrentLexeme = 
                 if ch |> Char.IsWhiteSpace then
@@ -62,13 +65,15 @@ let private getNextAnalyzerState (st: AnalyzerState) (ch: char) : AnalyzerState 
              lexems = List.append st.lexems [{token = st.currentLexeme |> t; position = st.lexemeBeginPosition}];
              currentLexeme = refreshCurrentLexeme;
              lexemeBeginPosition = getNextPosition;
-             forwardPosition = getNextPosition}
+             forwardPosition = getNextPosition;
+             symbolsTable = Map.add st.currentLexeme (t st.currentLexeme) st.symbolsTable}
         | InvalidState ->
              {state=InvalidState;
              lexems = st.lexems;
              currentLexeme = "";
              lexemeBeginPosition = st.lexemeBeginPosition;
-             forwardPosition = getNextPosition}
+             forwardPosition = getNextPosition;
+             symbolsTable = st.symbolsTable}
             
 let private foldStringWithAnalyzer (str: string) =
    Seq.toList str 
@@ -77,7 +82,8 @@ let private foldStringWithAnalyzer (str: string) =
         lexems = List.empty<TokenWithPosition>;
         currentLexeme = "";
         lexemeBeginPosition = (1, 1);
-        forwardPosition = (1, 1)}
+        forwardPosition = (1, 1);
+        symbolsTable = Map.empty}
        
 let private analysisResult onSuccess onError (resState: AnalyzerState) =
     let err = onError resState.lexemeBeginPosition
@@ -86,11 +92,11 @@ let private analysisResult onSuccess onError (resState: AnalyzerState) =
             if x <> 0 then
                 err
             else
-                onSuccess resState.lexems
+                onSuccess (resState.lexems, resState.symbolsTable)
         | _ -> err
     
 type AnalysisResult =
-    | SuccessResult of list<TokenWithPosition> 
+    | SuccessResult of (list<TokenWithPosition> * Map<string, Tokens.Token>)
     | FailedAt of int * int
 
 let analyze input =

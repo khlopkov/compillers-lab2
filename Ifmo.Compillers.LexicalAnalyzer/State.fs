@@ -3,6 +3,12 @@
 open System
 open Ifmo.Compillers.LexicalAnalyzer.Tokens
 
+type State =
+    | State of int
+    | Final of Tokens.TokenWithAttr
+    | InvalidState
+    | Comment
+
 let private isOperationSign ch =
     match ch with
         | '+' -> true
@@ -24,15 +30,13 @@ let private isLetter =
     Char.IsLetter
 
 let private isIdEnd ch = 
-    ch |> isOperationSign || ch |> isWhitespace
+    ch |> isOperationSign || ch |> isWhitespace || ch = ';' || ch = ','
 
 let private isIdContinuation ch = 
     ch |> isDigit || ch |> isLetter
 
 let private isOperationEnd ch =
-    ch |> isWhitespace || ch |> isLetter || ch |> isDigit
-
-type State = State of int | Final of Tokens.TokenWithAttr | InvalidState | Comment
+    ch |> isWhitespace || ch |> isLetter || ch |> isDigit || ch = ';' || ch = ','
 
 let private tokenToFinalState = 
     tokenToTokenWithAttr >> Final
@@ -52,6 +56,8 @@ let private getNextStateOf0 ch =
         | '>' -> State(25)
         | '<' -> State(26)
         | '/' -> State(28)
+        | ';' -> State(29)
+        | ',' -> State(30)
         | _ -> 
             if Char.IsWhiteSpace(ch) then
                 State(0) 
@@ -139,7 +145,7 @@ let private getNextStateOf8 ch =
             else InvalidState
 
 let private getNextStateOf9 ch = 
-    if ch |> isWhitespace then
+    if ch |> isWhitespace || ch |> isOperationSign then
         Final(tokenToTokenWithAttr End)
     else InvalidState
 
@@ -165,7 +171,7 @@ let private getNextStateOf11 ch =
 
 let private getNextStateOf12 ch = 
     if ch |> isWhitespace then 
-        tokenToFinalState Tokens.If
+        tokenToFinalState Tokens.Var
     elif ch |> isIdContinuation then
         State(13)
     else InvalidState
@@ -245,6 +251,12 @@ let private getNextStateOf28 ch =
     else 
         ch |> getNextStateOfOperation Tokens.Div
 
+let private getNextStateOf29 ch =
+    ch |> getNextStateOfOperation Tokens.LineBreak
+    
+let private getNextStateOf30 ch =
+    ch |> getNextStateOfOperation Tokens.Coma
+
 type GetNextState = State -> char -> State
 
 let getNextState state ch =
@@ -278,6 +290,8 @@ let getNextState state ch =
             | 26 -> getNextStateOf26
             | 27 -> getNextStateOf27
             | 28 -> getNextStateOf28
+            | 29 -> getNextStateOf29
+            | 30 -> getNextStateOf30
             | _ ->  fun _ -> InvalidState
 
     match state with

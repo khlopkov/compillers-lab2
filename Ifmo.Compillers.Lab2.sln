@@ -4,6 +4,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ifmo.Compillers.Lab2", "Ifm
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ifmo.Compillers.LexicalAnalyzer", "Ifmo.Compillers.LexicalAnalyzer\Ifmo.Compillers.LexicalAnalyzer.fsproj", "{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ifmo.Compillers.SyntacticalAnalyzer", "Ifmo.Compillers.SyntacticalAnalyzer\Ifmo.Compillers.SyntacticalAnalyzer.fsproj", "{166F4999-2CBE-4B41-AF08-C668F9B1F059}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8DF2647-7E08-4F6C-A0EA-E2D62623E9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{166F4999-2CBE-4B41-AF08-C668F9B1F059}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{166F4999-2CBE-4B41-AF08-C668F9B1F059}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{166F4999-2CBE-4B41-AF08-C668F9B1F059}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{166F4999-2CBE-4B41-AF08-C668F9B1F059}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

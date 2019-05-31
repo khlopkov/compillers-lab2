@@ -3,6 +3,12 @@
 open System
 open Ifmo.Compillers.LexicalAnalyzer
 open Ifmo.Compillers.LexicalAnalyzer.Analyzer
+open Ifmo.Compillers.SyntacticalAnalyzer
+
+let symbolsToString (table: Map<string, Tokens.Token>) =
+    let tokensOfTable: list<Tokens.Token> = List.map (fun (_, v) -> v)  (Map.toList table)
+    List.map Tokens.tokenToStr tokensOfTable 
+    
 
 let tokenListToString (list: list<TokenWithPosition>) = 
     let tokenToStr (t: TokenWithPosition) = t.ToString
@@ -10,23 +16,25 @@ let tokenListToString (list: list<TokenWithPosition>) =
 
 [<EntryPoint>]
 let main argv =
-    let res = Analyzer.analyze """
-        Begin // fsdajfdkasjfklaj
-        End.
+    let res = Analyzer.analyze """Begin // fsdajfdkasjfklaj
+        End.//fdasfdsa
         Var
         IF
-        kek
-        kek-kek
-        kek - kek
-        kek*kek
-        kek * kek
-        kek ** kek
-        kek = 5
+        abc
+        abcd-efg;
+        abc - fsadgsa;,
+        abc*abc
+        abc * abc
+        efg ** efg
+        efg**efg
+        kfsdjakl = 5
     """
     match res with
-        | Analyzer.SuccessResult(tokens) ->
-            tokens |> tokenListToString |> printfn "%A" 
+        | Analyzer.SuccessResult(tokens, symbolsTable) ->
+            do tokens |> tokenListToString |> printfn "Lexems list : %A \n"
+            do symbolsTable |> symbolsToString |> printfn "Symbols table: %A \n"
         | Analyzer.FailedAt(row,  col) ->
             printfn "failed at position %d %d" row col
     Console.ReadKey() |> ignore
+    
     0 // return an integer exit code
