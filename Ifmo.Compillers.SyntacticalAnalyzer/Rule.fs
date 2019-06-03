@@ -1,41 +1,40 @@
 module Ifmo.Compillers.SyntacticalAnalyzer.Rule
 open Ifmo.Compillers.LexicalAnalyzer
-open Ifmo.Compillers.SyntacticalAnalyzer.Symbols
 
 type Rule = {
-    left: Symbol
-    right: list<Symbol>
+    left: Symbols.NonTerminal
+    right: list<Symbols.Symbol>
 }
 
-let private findRulesByIdentifier (identifier: string): list<Rule> -> list<Rule> =
-    fun rule ->
-        match rule.left with
-            | Symbols.NonTerminal x ->
-                x = identifier
-            | _ -> false
-    |> List.filter
-    
-let rec first (rules: list<Rule>) (a: Symbol): Set<Symbol> =
-    let foldFun (firstCallback: list<Rule> -> Symbol -> Set<Symbol>) (set: Set<Symbol>) (rule: Rule) =
-        match List.head rule.right with 
-            | Terminal x -> Terminal >> Set.empty.Add <| x
-            | NonTerminal f -> Set.union(NonTerminal >> firstCallback rules <| f) set
-    match a with
-        | Terminal _ ->
-            Set.empty.Add(a)
-        | NonTerminal t ->
-            List.fold (foldFun first) Set.empty (rules |> findRulesByIdentifier t)
-            
+type ConcreteRuleChooser = Symbols.Symbol -> List<Rule>
+type RuleChooser = Symbols.NonTerminal -> ConcreteRuleChooser
 
-let programRule = 
-    {left = Symbols.program; right = [Symbols.varDeclaration; Symbols.computationsDescribe]};
-let computationsDescribeRule =
-    {left = Symbols.computationsDescribe; right=[
-        Terminal Tokens.Begin; Symbols.operatorList; Terminal Tokens.End;
-    ]}
-let variableDeclaration =
-    {left = Symbols.varDeclaration; right=[Terminal Tokens.Var; Symbols.varList]}
-let variableList1 =
-    {left = Symbols.varList; right=[Tokens.Id >> Terminal <| ""]}
-
-
+let private getRule rulesByToken: ConcreteRuleChooser = fun s -> 
+    let getToken =
+        match s with
+            | Symbols.Terminal l -> Some l
+            | _ -> None
+    let token = getToken
+    match token with
+    | None -> list.Empty
+    | Some t ->
+        rulesByToken t
+        
+let private getRuleOfConsistatOperator: ConcreteRuleChooser =
+    let rulesByToken t =
+        match t with
+        | Tokens.If ->
+            [{ left = Symbols.ConsistantOperator; right = [Symbols.Terminal Tokens.If;]}]
+        | _ -> list.Empty
+    getRule rulesByToken
+ 
+let private getRuleOfBinaryOp: ConcreteRuleChooser =
+    let oneTokenRule t =
+        [{ left = Symbols.BinaryOp; right = [Symbols.Terminal t ]}]
+    let rulesByToken t =
+        //TODO: implement this
+        match t with
+        | Tokens.Minus ->
+            oneTokenRule Tokens.Minus
+        | _ -> list.Empty
+    getRule rulesByToken

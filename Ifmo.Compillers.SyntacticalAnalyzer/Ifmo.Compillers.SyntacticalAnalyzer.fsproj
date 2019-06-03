@@ -5,9 +5,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Analyzer.fs" />
         <Compile Include="Symbols.fs" />
         <Compile Include="Rule.fs" />
+        <Compile Include="Nodes.fs" />
+        <Compile Include="Analyzer.fs" />
     </ItemGroup>
 
     <ItemGroup>

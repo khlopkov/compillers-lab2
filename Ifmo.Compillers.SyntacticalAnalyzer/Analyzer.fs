@@ -1,22 +1,15 @@
 module Ifmo.Compillers.SyntacticalAnalyzer.Analyzer
 
-// type Node =
-//     | Node of (Symbols.Symbol * list<Node>)
-//     | Failure 
-// 
-// type AnalyzerState = {
-//     stack: list<Symbols.Symbol>
-//     node: Node
-//     currentSymbol: int
-// }
-// 
-// let (>>=) (f: (Symbols.Symbol * list<Node>) -> Node) (node: Node) : Node =
-//     match node with
-//         | Node x -> f x
-//         | Failure -> Failure
-// 
-// let private failedState state =
-//     {stack = state.stack; node = state.node; currentSymbol = state.currentSymbol}
+type AnalyzerState = {
+    node: Nodes.Node
+    currentSymbol: int
+}
+let private failedState state =
+    {node = Nodes.Failure; currentSymbol = state.currentSymbol}
+
+let private shift state =
+    {node = state.node; currentSymbol = state.currentSymbol + 1}
+    
 // 
 // let abstractNodeParser (buffer: string) (state: AnalyzerState): AnalyzerState =
 //     if buffer.Length = state.currentSymbol + 1 then
