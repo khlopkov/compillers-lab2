@@ -1,4 +1,5 @@
 module Ifmo.Compillers.SyntacticalAnalyzer.Node
+open Ifmo.Compillers.SyntacticalAnalyzer
 
 type Node =
     | Node of (Symbols.Symbol * list<Node>)
@@ -26,5 +27,5 @@ let rec toJson node =
         <| children) + "]"
     match node with
     | Node (s, children) ->
-        "{ \"node\": \"" + s.ToString().Replace("\"", "'") + "\", \"children\": " + childrenToArray children + "}"
+        "{ \"node\": \"" + (Symbols.toString s).Replace("\"", "'") + "\", \"children\": " + childrenToArray children + "}"
     | Failure -> "{ \"node\": \"Failure\" }"

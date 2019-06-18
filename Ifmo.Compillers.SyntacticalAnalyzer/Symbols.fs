@@ -35,5 +35,10 @@ let bindNonTerminal (f: NonTerminal -> Symbol) (s: Symbol): Symbol =
         | NonTerminal t -> f t
         | _ -> s
 
+let toString s =
+    match s with
+    | NonTerminal x -> "<"+x.ToString()+">"
+    | Terminal x -> x.ToString()
+
 let nonTerminalSymbol =
     NonTerminal
