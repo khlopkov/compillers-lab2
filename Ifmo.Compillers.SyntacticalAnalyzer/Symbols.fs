@@ -7,6 +7,7 @@ type NonTerminal =
     | VarDeclaration
     | VarList
     | OperatorList
+    | OperatorList'
     | Operator
     | ConsistantOperator
     | Expr

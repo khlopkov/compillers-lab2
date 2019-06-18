@@ -5,6 +5,10 @@ type Rule = {
     right: list<Symbols.Symbol>
 }
 
+let epsilonRule n = {
+    left = n; right = []
+}
+
 module private RuleDefs =
     open Ifmo.Compillers.LexicalAnalyzer
     type RuleDef = Tokens.Token -> list<Rule>
@@ -131,7 +135,8 @@ module private RuleDefs =
                     right = [
                         Tokens.Id >> Symbols.Terminal <| "";
                         Symbols.Terminal Tokens.Assign;
-                        Symbols.NonTerminal Symbols.Expr ] } ]
+                        Symbols.NonTerminal Symbols.Expr;
+                        Symbols.Terminal Tokens.LineBreak ] } ]
             | _ -> list.Empty
         rulesByToken
                 
@@ -168,16 +173,23 @@ module private RuleDefs =
             | Tokens.Id _
             | Tokens.If
             | Tokens.Begin ->
-                Symbols.NonTerminal
-                >> (oneSymbolRule <| Symbols.OperatorList)
-                >> fun r -> [r; {
-                    left = Symbols.OperatorList;
-                    right = [
-                        Symbols.NonTerminal Symbols.Operator;
-                        Symbols.NonTerminal Symbols.OperatorList;
-                    ] }]
-                <| Symbols.Operator
+                [{left = Symbols.OperatorList; right = [
+                    Symbols.NonTerminal Symbols.Operator;
+                    Symbols.NonTerminal Symbols.OperatorList'
+                ]}]
             | _ -> list.Empty
+        rulesByToken
+        
+    let getRuleOfOperatorList': RuleDef =
+        let rulesByToken t =
+            match t with
+            | Tokens.Id _
+            | Tokens.If
+            | Tokens.Begin ->
+                [ Symbols.NonTerminal
+                >> (oneSymbolRule <| Symbols.OperatorList')
+                <| Symbols.OperatorList ]
+            | _ -> [ epsilonRule Symbols.OperatorList' ]
         rulesByToken
         
     let getRuleOfVarList: RuleDef =
@@ -248,6 +260,7 @@ let getRulesByNonTerminal left currentToken =
     | Symbols.VarDeclaration -> RuleDefs.getRuleOfVarDeclaration currentToken
     | Symbols.VarList -> RuleDefs.getRuleOfVarList currentToken
     | Symbols.OperatorList -> RuleDefs.getRuleOfOperatorList currentToken
+    | Symbols.OperatorList' -> RuleDefs.getRuleOfOperatorList' currentToken
     | Symbols.Operator -> RuleDefs.getRuleOfOperator currentToken
     | Symbols.ConsistantOperator -> RuleDefs.getRuleOfConsistantOperator currentToken
     | Symbols.Assign -> RuleDefs.getRuleOfAssign currentToken
