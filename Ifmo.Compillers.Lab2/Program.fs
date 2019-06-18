@@ -27,7 +27,7 @@ let main argv =
             do tokens |> tokenListToString |> printfn "Lexems list : %A \n"
             do symbolsTable |> symbolsToString |> printfn "Symbols table: %A \n"
             do Node.toJson
-               >> printfn "Tree %s \n"
+               >> fun content -> System.IO.File.WriteAllText("data.json", content)
                <| (List.map (fun t -> t.token) 
                    >> State.parse
                    <| tokens).root
