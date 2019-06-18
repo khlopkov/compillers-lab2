@@ -196,21 +196,34 @@ module private RuleDefs =
         let rulesByToken t =
             match t with
             | Tokens.Id _ -> 
-                [{ left = Symbols.VarList;
-                   right =
-                        [Symbols.Terminal t;
-                        Symbols.Terminal Tokens.LineBreak;
-                        Symbols.NonTerminal Symbols.VarList; ] };
-                {left = Symbols.VarList;
-                    right =
-                        [Symbols.Terminal t;
-                        Symbols.Terminal Tokens.LineBreak; ] };
-                { left = Symbols.VarList;
-                    right =
-                        [Symbols.Terminal t;
-                        Symbols.Terminal Tokens.Coma;
-                        Symbols.NonTerminal Symbols.VarList; ] }]
+                [{ left = Symbols.VarList; right = [
+                    Symbols.Terminal t;
+                    Symbols.NonTerminal Symbols.VarList';
+                ] }]
             | _ -> list.Empty
+        rulesByToken
+        
+    let getRuleOfVarList': RuleDef =
+        let rulesByToken t =
+            match t with
+            | Tokens.LineBreak _ -> 
+                [{ left = Symbols.VarList'; right = [
+                    Symbols.Terminal Tokens.LineBreak;
+                    Symbols.NonTerminal Symbols.VarList''; ] }]
+            | Tokens.Coma _ -> 
+                [{ left = Symbols.VarList';
+                    right = [
+                    Symbols.Terminal Tokens.Coma;
+                    Symbols.NonTerminal Symbols.VarList; ] }]
+            | _ -> []
+        rulesByToken
+        
+    let getRuleOfVarList'': RuleDef =
+        let rulesByToken t =
+            match t with
+            | Tokens.Id _ -> 
+                [{ left = Symbols.VarList''; right = [ Symbols.NonTerminal Symbols.VarList; ] }]
+            | _ -> [epsilonRule Symbols.VarList'']
         rulesByToken
         
     let getRuleOfVarDeclaration: RuleDef =
@@ -259,6 +272,8 @@ let getRulesByNonTerminal left currentToken =
     | Symbols.ComputationsDescribe -> RuleDefs.getRuleOfComputationsDescribe currentToken
     | Symbols.VarDeclaration -> RuleDefs.getRuleOfVarDeclaration currentToken
     | Symbols.VarList -> RuleDefs.getRuleOfVarList currentToken
+    | Symbols.VarList' -> RuleDefs.getRuleOfVarList' currentToken
+    | Symbols.VarList'' -> RuleDefs.getRuleOfVarList'' currentToken
     | Symbols.OperatorList -> RuleDefs.getRuleOfOperatorList currentToken
     | Symbols.OperatorList' -> RuleDefs.getRuleOfOperatorList' currentToken
     | Symbols.Operator -> RuleDefs.getRuleOfOperator currentToken

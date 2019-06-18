@@ -6,6 +6,8 @@ type NonTerminal =
     | ComputationsDescribe
     | VarDeclaration
     | VarList
+    | VarList'
+    | VarList''
     | OperatorList
     | OperatorList'
     | Operator
