@@ -11,6 +11,7 @@ type NonTerminal =
     | ConsistantOperator
     | Expr
     | SubExpr
+    | SubExpr'
     | Assign
     | UnaryOp
     | BinaryOp

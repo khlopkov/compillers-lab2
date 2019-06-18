@@ -22,7 +22,19 @@ type Token =
     | Id of string
     | Const of int
 
- type TokenWithAttr = string -> Token
+let compareByType a b =
+    match a with
+        | Id _ ->
+            match b with
+                | Id _ -> true
+                | _ -> false
+        | Const _ ->
+            match b with
+                | Const _ -> true
+                | _ -> false
+        | _ -> a = b
+            
+type TokenWithAttr = string -> Token
 
 let tokenToTokenWithAttr (t: Token): TokenWithAttr =
     match t with

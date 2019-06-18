@@ -5,22 +5,10 @@ type Rule = {
     right: list<Symbols.Symbol>
 }
 
-        
 module private RuleDefs =
     open Ifmo.Compillers.LexicalAnalyzer
-    type RuleDef = Symbols.Symbol -> List<Rule>
+    type RuleDef = Tokens.Token -> list<Rule>
     
-    let private getRule rulesByToken: RuleDef = fun s -> 
-        let getToken =
-            match s with
-                | Symbols.Terminal l -> Some l
-                | _ -> None
-        let token = getToken
-        match token with
-        | None -> list.Empty
-        | Some t ->
-            rulesByToken t
-            
     let private oneSymbolRule left right =
         { left = left; right = [right]}
         
@@ -29,11 +17,11 @@ module private RuleDefs =
         >> oneSymbolRule left
         
         
-    let getRuleOfConsistatOperator: RuleDef =
+    let getRuleOfComplexOperator: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.If ->
-                [{ left = Symbols.ConsistantOperator; right = [
+                [{ left = Symbols.ComplexOperator; right = [
                     Symbols.Terminal Tokens.If;
                     Symbols.Terminal Tokens.OpenBracket;
                     Symbols.NonTerminal Symbols.Expr;
@@ -41,7 +29,7 @@ module private RuleDefs =
                     Symbols.NonTerminal Symbols.Operator;
                 ]}]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
  
         
     let getRuleOfBinaryOp: RuleDef =
@@ -59,7 +47,16 @@ module private RuleDefs =
             | Tokens.Equal ->
                 oneTokenRule t
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
+        
+    let getRuleOfOperand: RuleDef =
+        let rulesByToken t =
+            match t with
+            | Tokens.Id _
+            | Tokens.Const _ ->
+                [oneTokenRule Symbols.Operand t]
+            | _ -> list.Empty
+        rulesByToken
         
     let getRuleOfUnaryOp: RuleDef =
         let rulesByToken t =
@@ -68,32 +65,46 @@ module private RuleDefs =
             | Tokens.Not ->
                 [oneTokenRule Symbols.UnaryOp t]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
-    let getRuleOfSubexpr: RuleDef =
-        let commonRule = {left = Symbols.SubExpr; right = [
-            Symbols.NonTerminal Symbols.SubExpr;
-            Symbols.NonTerminal Symbols.BinaryOp;
-            Symbols.NonTerminal Symbols.SubExpr;
-        ]}
+    let getRuleOfSubExpr: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.OpenBracket ->
-                [ { left = Symbols.SubExpr;
+                 [{ left = Symbols.SubExpr;
                     right = [ Symbols.Terminal Tokens.OpenBracket;
                     Symbols.NonTerminal Symbols.Expr;
-                    Symbols.Terminal Tokens.CloseBracket; ]
-                 }; commonRule ]
+                    Symbols.Terminal Tokens.CloseBracket;
+                    Symbols.NonTerminal Symbols.SubExpr' ]
+                 }]
             | Tokens.Id _
             | Tokens.Const _ ->
-                Symbols.NonTerminal
-                >> (oneSymbolRule Symbols.SubExpr)
-                >> (fun r ->  [r; commonRule] )
-                <| Symbols.Operand
+                [{ left = Symbols.SubExpr; right = [
+                    Symbols.NonTerminal Symbols.Operand;
+                    Symbols.NonTerminal Symbols.SubExpr';
+                ] }]
                 
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
     
+    let getRuleOfSubExpr': RuleDef =
+        let rulesByToken t =
+            match t with
+            | Tokens.Equal
+            | Tokens.Greater
+            | Tokens.Less
+            | Tokens.Pow
+            | Tokens.Div
+            | Tokens.Mul
+            | Tokens.Minus
+            | Tokens.Plus ->
+                [{left = Symbols.SubExpr'; right = [
+                    Symbols.NonTerminal Symbols.BinaryOp;
+                    Symbols.NonTerminal Symbols.SubExpr;
+                ]}]
+            | _ -> [{left = Symbols.SubExpr'; right = []}]
+        rulesByToken
+        
     let getRuleOfExpr: RuleDef =
         let rulesByToken t =
             match t with
@@ -110,7 +121,7 @@ module private RuleDefs =
                     right = [
                         Symbols.NonTerminal Symbols.SubExpr; ] } ]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
      
     let getRuleOfAssign: RuleDef =
         let rulesByToken t =
@@ -122,7 +133,7 @@ module private RuleDefs =
                         Symbols.Terminal Tokens.Assign;
                         Symbols.NonTerminal Symbols.Expr ] } ]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
                 
     let getRuleOfConsistantOperator: RuleDef =
         let rulesByToken t =
@@ -134,7 +145,7 @@ module private RuleDefs =
                         Symbols.NonTerminal Symbols.OperatorList;
                         Symbols.Terminal Tokens.End ] } ]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
     let getRuleOfOperator: RuleDef =
         let oneSymbolRule' = 
@@ -149,7 +160,7 @@ module private RuleDefs =
             | Tokens.If ->
                 [oneSymbolRule' Symbols.ComplexOperator]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
     
     let getRuleOfOperatorList: RuleDef =
         let rulesByToken t =
@@ -167,28 +178,28 @@ module private RuleDefs =
                     ] }]
                 <| Symbols.Operator
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
     let getRuleOfVarList: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.Id _ -> 
-                (oneTokenRule <| Symbols.VarList)
-                >> fun r -> [r; {
-                    left = Symbols.VarList;
-                        right = [
-                        Symbols.Terminal t;
-                        Symbols.Terminal Tokens.Coma;
-                        Symbols.NonTerminal Symbols.VarList;
-                    ] }; { left = Symbols.VarList;
-                           right = [
-                        Symbols.Terminal t;
+                [{ left = Symbols.VarList;
+                   right =
+                        [Symbols.Terminal t;
                         Symbols.Terminal Tokens.LineBreak;
-                        Symbols.NonTerminal Symbols.VarList;
-                    ] }]
-                <| t
+                        Symbols.NonTerminal Symbols.VarList; ] };
+                {left = Symbols.VarList;
+                    right =
+                        [Symbols.Terminal t;
+                        Symbols.Terminal Tokens.LineBreak; ] };
+                { left = Symbols.VarList;
+                    right =
+                        [Symbols.Terminal t;
+                        Symbols.Terminal Tokens.Coma;
+                        Symbols.NonTerminal Symbols.VarList; ] }]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
     let getRuleOfVarDeclaration: RuleDef =
         let rulesByToken t =
@@ -200,7 +211,7 @@ module private RuleDefs =
                     Symbols.NonTerminal Symbols.VarList;
                 ] }]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
     let getRuleOfComputationsDescribe: RuleDef =
         let rulesByToken t =
@@ -213,7 +224,7 @@ module private RuleDefs =
                     Symbols.Terminal Tokens.End;
                 ] }]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
     let getRuleOfProgram: RuleDef =
         let rulesByToken t =
@@ -225,8 +236,26 @@ module private RuleDefs =
                     Symbols.NonTerminal Symbols.ComputationsDescribe;
                 ] }]
             | _ -> list.Empty
-        getRule rulesByToken
+        rulesByToken
         
 type RuleChooser = Symbols.NonTerminal -> RuleDefs.RuleDef
 
+
+let getRulesByNonTerminal left currentToken = 
+    match left with
+    | Symbols.Program -> RuleDefs.getRuleOfProgram currentToken
+    | Symbols.ComputationsDescribe -> RuleDefs.getRuleOfComputationsDescribe currentToken
+    | Symbols.VarDeclaration -> RuleDefs.getRuleOfVarDeclaration currentToken
+    | Symbols.VarList -> RuleDefs.getRuleOfVarList currentToken
+    | Symbols.OperatorList -> RuleDefs.getRuleOfOperatorList currentToken
+    | Symbols.Operator -> RuleDefs.getRuleOfOperator currentToken
+    | Symbols.ConsistantOperator -> RuleDefs.getRuleOfConsistantOperator currentToken
+    | Symbols.Assign -> RuleDefs.getRuleOfAssign currentToken
+    | Symbols.Expr -> RuleDefs.getRuleOfExpr currentToken
+    | Symbols.SubExpr -> RuleDefs.getRuleOfSubExpr currentToken
+    | Symbols.SubExpr' -> RuleDefs.getRuleOfSubExpr' currentToken
+    | Symbols.UnaryOp -> RuleDefs.getRuleOfUnaryOp currentToken
+    | Symbols.BinaryOp -> RuleDefs.getRuleOfBinaryOp currentToken
+    | Symbols.Operand -> RuleDefs.getRuleOfOperand currentToken
+    | Symbols.ComplexOperator -> RuleDefs.getRuleOfComplexOperator currentToken
 

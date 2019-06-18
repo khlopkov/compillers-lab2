@@ -14,4 +14,8 @@
       <ProjectReference Include="..\Ifmo.Compillers.SyntacticalAnalyzer\Ifmo.Compillers.SyntacticalAnalyzer.fsproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="FSharp.Compiler.Service" Version="29.0.1" />
+    </ItemGroup>
+
 </Project>

@@ -16,23 +16,21 @@ let tokenListToString (list: list<TokenWithPosition>) =
 
 [<EntryPoint>]
 let main argv =
-    let res = Analyzer.analyze """Begin // fsdajfdkasjfklaj
-        End.//fdasfdsa
-        Var
-        IF
-        abc
-        abcd-efg;
-        abc - fsadgsa;,
-        abc*abc
-        abc * abc
-        efg ** efg
-        efg**efg
-        kfsdjakl = 5
+    let res = Analyzer.analyze """Var
+    a, b ; a ;
+    Begin
+        a = b + c ;
+    End.
     """
     match res with
         | Analyzer.SuccessResult(tokens, symbolsTable) ->
             do tokens |> tokenListToString |> printfn "Lexems list : %A \n"
             do symbolsTable |> symbolsToString |> printfn "Symbols table: %A \n"
+            do Node.toJson
+               >> printfn "Tree %s \n"
+               <| (List.map (fun t -> t.token) 
+                   >> State.parse
+                   <| tokens).root
         | Analyzer.FailedAt(row,  col) ->
             printfn "failed at position %d %d" row col
     Console.ReadKey() |> ignore

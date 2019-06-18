@@ -1,11 +1,11 @@
 module Ifmo.Compillers.SyntacticalAnalyzer.Analyzer
 
 type AnalyzerState = {
-    node: Nodes.Node
+    node: Node.Node
     currentSymbol: int
 }
 let private failedState state =
-    {node = Nodes.Failure; currentSymbol = state.currentSymbol}
+    {node = Node.Failure; currentSymbol = state.currentSymbol}
 
 let private shift state =
     {node = state.node; currentSymbol = state.currentSymbol + 1}

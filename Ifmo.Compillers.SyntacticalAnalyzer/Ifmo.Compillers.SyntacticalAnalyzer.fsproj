@@ -1,18 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>netcoreapp2.2</TargetFramework>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <Compile Include="Symbols.fs" />
-        <Compile Include="Rule.fs" />
-        <Compile Include="Nodes.fs" />
-        <Compile Include="Analyzer.fs" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Ifmo.Compillers.LexicalAnalyzer\Ifmo.Compillers.LexicalAnalyzer.fsproj" />
-    </ItemGroup>
-
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ifmo.Compillers.LexicalAnalyzer\Ifmo.Compillers.LexicalAnalyzer.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Symbols.fs" />
+    <Compile Include="Rule.fs" />
+    <Compile Include="Node.fs" />
+    <Compile Include="State.fs" />
+    <Compile Include="Analyzer.fs" />
+  </ItemGroup>
 </Project>
