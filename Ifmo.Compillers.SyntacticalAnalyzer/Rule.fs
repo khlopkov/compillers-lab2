@@ -11,7 +11,7 @@ let epsilonRule n = {
 
 module private RuleDefs =
     open Ifmo.Compillers.LexicalAnalyzer
-    type RuleDef = Tokens.Token -> list<Rule>
+    type RuleDef = Tokens.Token -> Rule Option
     
     let private oneSymbolRule left right =
         { left = left; right = [right]}
@@ -25,20 +25,20 @@ module private RuleDefs =
         let rulesByToken t =
             match t with
             | Tokens.If ->
-                [{ left = Symbols.ComplexOperator; right = [
+                Some { left = Symbols.ComplexOperator; right = [
                     Symbols.Terminal Tokens.If;
                     Symbols.Terminal Tokens.OpenBracket;
                     Symbols.NonTerminal Symbols.Expr;
                     Symbols.Terminal Tokens.CloseBracket;
                     Symbols.NonTerminal Symbols.Operator;
-                ]}]
-            | _ -> list.Empty
+                ]}
+            | _ -> None
         rulesByToken
  
         
     let getRuleOfBinaryOp: RuleDef =
         let oneTokenRule t =
-            [{ left = Symbols.BinaryOp; right = [Symbols.Terminal t ]}]
+            Some { left = Symbols.BinaryOp; right = [Symbols.Terminal t ]}
         let rulesByToken t =
             match t with
             | Tokens.Minus 
@@ -50,7 +50,7 @@ module private RuleDefs =
             | Tokens.Less
             | Tokens.Equal ->
                 oneTokenRule t
-            | _ -> list.Empty
+            | _ -> None
         rulesByToken
         
     let getRuleOfOperand: RuleDef =
@@ -58,8 +58,9 @@ module private RuleDefs =
             match t with
             | Tokens.Id _
             | Tokens.Const _ ->
-                [oneTokenRule Symbols.Operand t]
-            | _ -> list.Empty
+                oneTokenRule Symbols.Operand
+                >> Some <| t
+            | _ -> None
         rulesByToken
         
     let getRuleOfUnaryOp: RuleDef =
@@ -67,28 +68,27 @@ module private RuleDefs =
             match t with
             | Tokens.Minus 
             | Tokens.Not ->
-                [oneTokenRule Symbols.UnaryOp t]
-            | _ -> list.Empty
+                oneTokenRule Symbols.UnaryOp
+                >> Some <| t
+            | _ -> None
         rulesByToken
         
     let getRuleOfSubExpr: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.OpenBracket ->
-                 [{ left = Symbols.SubExpr;
-                    right = [ Symbols.Terminal Tokens.OpenBracket;
+                Some { left = Symbols.SubExpr; right = [
+                    Symbols.Terminal Tokens.OpenBracket;
                     Symbols.NonTerminal Symbols.Expr;
                     Symbols.Terminal Tokens.CloseBracket;
-                    Symbols.NonTerminal Symbols.SubExpr' ]
-                 }]
+                    Symbols.NonTerminal Symbols.SubExpr' ] }
             | Tokens.Id _
             | Tokens.Const _ ->
-                [{ left = Symbols.SubExpr; right = [
+                Some { left = Symbols.SubExpr; right = [
                     Symbols.NonTerminal Symbols.Operand;
-                    Symbols.NonTerminal Symbols.SubExpr';
-                ] }]
+                    Symbols.NonTerminal Symbols.SubExpr'; ] }
                 
-            | _ -> list.Empty
+            | _ -> None
         rulesByToken
     
     let getRuleOfSubExpr': RuleDef =
@@ -102,11 +102,11 @@ module private RuleDefs =
             | Tokens.Mul
             | Tokens.Minus
             | Tokens.Plus ->
-                [{left = Symbols.SubExpr'; right = [
+                Some {left = Symbols.SubExpr'; right = [
                     Symbols.NonTerminal Symbols.BinaryOp;
                     Symbols.NonTerminal Symbols.SubExpr;
-                ]}]
-            | _ -> [{left = Symbols.SubExpr'; right = []}]
+                ]}
+            | _ -> epsilonRule >> Some <| Symbols.SubExpr' 
         rulesByToken
         
     let getRuleOfExpr: RuleDef =
@@ -114,42 +114,38 @@ module private RuleDefs =
             match t with
             | Tokens.Minus
             | Tokens.Not ->
-                [ { left = Symbols.Expr;
-                    right = [
-                        Symbols.NonTerminal Symbols.UnaryOp;
-                        Symbols.NonTerminal Symbols.SubExpr; ] } ]
+                Some { left = Symbols.Expr; right = [
+                    Symbols.NonTerminal Symbols.UnaryOp;
+                    Symbols.NonTerminal Symbols.SubExpr; ] }
             | Tokens.OpenBracket
             | Tokens.Id _
             | Tokens.Const _ ->
-                [ { left = Symbols.Expr;
-                    right = [
-                        Symbols.NonTerminal Symbols.SubExpr; ] } ]
-            | _ -> list.Empty
+                Some { left = Symbols.Expr; right = [
+                    Symbols.NonTerminal Symbols.SubExpr; ] }
+            | _ -> None
         rulesByToken
      
     let getRuleOfAssign: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.Id _ ->
-                [ { left = Symbols.Assign;
-                    right = [
-                        Tokens.Id >> Symbols.Terminal <| "";
-                        Symbols.Terminal Tokens.Assign;
-                        Symbols.NonTerminal Symbols.Expr;
-                        Symbols.Terminal Tokens.LineBreak ] } ]
-            | _ -> list.Empty
+                Some { left = Symbols.Assign; right = [
+                    Tokens.Id >> Symbols.Terminal <| "";
+                    Symbols.Terminal Tokens.Assign;
+                    Symbols.NonTerminal Symbols.Expr;
+                    Symbols.Terminal Tokens.LineBreak ] }
+            | _ -> None
         rulesByToken
                 
     let getRuleOfConsistantOperator: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.Begin _ ->
-                [ { left = Symbols.ConsistantOperator;
-                    right = [
-                        Symbols.Terminal Tokens.Begin;
-                        Symbols.NonTerminal Symbols.OperatorList;
-                        Symbols.Terminal Tokens.End ] } ]
-            | _ -> list.Empty
+                Some { left = Symbols.ConsistantOperator; right = [
+                    Symbols.Terminal Tokens.Begin;
+                    Symbols.NonTerminal Symbols.OperatorList;
+                    Symbols.Terminal Tokens.End ] }
+            | _ -> None
         rulesByToken
         
     let getRuleOfOperator: RuleDef =
@@ -159,12 +155,12 @@ module private RuleDefs =
         let rulesByToken t =
             match t with
             | Tokens.Id _ ->
-                [oneSymbolRule' Symbols.Assign]
+                Some <| oneSymbolRule' Symbols.Assign
             | Tokens.Begin ->
-                [oneSymbolRule' Symbols.ConsistantOperator]
+                Some <| oneSymbolRule' Symbols.ConsistantOperator
             | Tokens.If ->
-                [oneSymbolRule' Symbols.ComplexOperator]
-            | _ -> list.Empty
+                Some <| oneSymbolRule' Symbols.ComplexOperator
+            | _ -> None
         rulesByToken
     
     let getRuleOfOperatorList: RuleDef =
@@ -173,11 +169,11 @@ module private RuleDefs =
             | Tokens.Id _
             | Tokens.If
             | Tokens.Begin ->
-                [{left = Symbols.OperatorList; right = [
+                Some {left = Symbols.OperatorList; right = [
                     Symbols.NonTerminal Symbols.Operator;
                     Symbols.NonTerminal Symbols.OperatorList'
-                ]}]
-            | _ -> list.Empty
+                ]}
+            | _ -> None
         rulesByToken
         
     let getRuleOfOperatorList': RuleDef =
@@ -186,81 +182,76 @@ module private RuleDefs =
             | Tokens.Id _
             | Tokens.If
             | Tokens.Begin ->
-                [ Symbols.NonTerminal
+                 Symbols.NonTerminal
                 >> (oneSymbolRule <| Symbols.OperatorList')
-                <| Symbols.OperatorList ]
-            | _ -> [ epsilonRule Symbols.OperatorList' ]
+                >> Some
+                <| Symbols.OperatorList 
+            | _ ->  Some <| epsilonRule Symbols.OperatorList' 
         rulesByToken
         
     let getRuleOfVarList: RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.Id _ -> 
-                [{ left = Symbols.VarList; right = [
+                Some { left = Symbols.VarList; right = [
                     Symbols.Terminal t;
                     Symbols.NonTerminal Symbols.VarList';
-                ] }]
-            | _ -> list.Empty
+                ] }
+            | _ -> None
         rulesByToken
         
     let getRuleOfVarList': RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.LineBreak _ -> 
-                [{ left = Symbols.VarList'; right = [
+                Some{ left = Symbols.VarList'; right = [
                     Symbols.Terminal Tokens.LineBreak;
-                    Symbols.NonTerminal Symbols.VarList''; ] }]
+                    Symbols.NonTerminal Symbols.VarList''; ] }
             | Tokens.Coma _ -> 
-                [{ left = Symbols.VarList';
-                    right = [
+                Some { left = Symbols.VarList'; right = [
                     Symbols.Terminal Tokens.Coma;
-                    Symbols.NonTerminal Symbols.VarList; ] }]
-            | _ -> []
+                    Symbols.NonTerminal Symbols.VarList; ] }
+            | _ -> None
         rulesByToken
         
     let getRuleOfVarList'': RuleDef =
         let rulesByToken t =
             match t with
             | Tokens.Id _ -> 
-                [{ left = Symbols.VarList''; right = [ Symbols.NonTerminal Symbols.VarList; ] }]
-            | _ -> [epsilonRule Symbols.VarList'']
+                Some { left = Symbols.VarList''; right = [ Symbols.NonTerminal Symbols.VarList; ] }
+            | _ -> Some <| epsilonRule Symbols.VarList''
         rulesByToken
         
     let getRuleOfVarDeclaration: RuleDef =
         let rulesByToken t =
             match t with
-            | Tokens.Var _ -> [{
-                left = Symbols.VarDeclaration;
-                right = [
+            | Tokens.Var _ ->
+                Some { left = Symbols.VarDeclaration; right = [
                     Symbols.Terminal Tokens.Var;
-                    Symbols.NonTerminal Symbols.VarList;
-                ] }]
-            | _ -> list.Empty
+                    Symbols.NonTerminal Symbols.VarList; ] }
+            | _ -> None
         rulesByToken
         
     let getRuleOfComputationsDescribe: RuleDef =
         let rulesByToken t =
             match t with
-            | Tokens.Begin _ -> [{
-                left = Symbols.ComputationsDescribe;
-                right = [
+            | Tokens.Begin _ ->
+                Some { left = Symbols.ComputationsDescribe; right = [
                     Symbols.Terminal Tokens.Begin;
                     Symbols.NonTerminal Symbols.OperatorList;
-                    Symbols.Terminal Tokens.End;
-                ] }]
-            | _ -> list.Empty
+                    Symbols.Terminal Tokens.End; ] }
+            | _ -> None
         rulesByToken
         
     let getRuleOfProgram: RuleDef =
         let rulesByToken t =
             match t with
-            | Tokens.Var _ -> [{
-                left = Symbols.Program;
-                right = [
+            | Tokens.Var _ ->
+                Some { left = Symbols.Program; right = [
                     Symbols.NonTerminal Symbols.VarDeclaration;
                     Symbols.NonTerminal Symbols.ComputationsDescribe;
-                ] }]
-            | _ -> list.Empty
+                ] }
+            | _ -> None 
         rulesByToken
         
 type RuleChooser = Symbols.NonTerminal -> RuleDefs.RuleDef

@@ -59,17 +59,14 @@ let rec stateByNonTerminal state nonTerminal (lexems: Tokens.Token list) =
     let foldRule (state: State) (rule: Rule.Rule) =
         List.fold foldFun state rule.right 
             
-    let possibleRules = Rule.getRulesByNonTerminal nonTerminal currentToken
-    let possibleStates = List.map (fun r -> foldRule state r) possibleRules
-    let validStates =
-        List.filter isSuccessfull possibleStates
+    let rule = Rule.getRulesByNonTerminal nonTerminal currentToken
         
     if state.position > lexems.Length - 1 then
         failedState
-    elif validStates.Length = 0 then
-        failedState
     else
-        chooseWithGreatestPosition validStates
+        match rule with
+        | None -> failedState
+        | Some r -> foldRule state r
         
 let parse (lexems: Tokens.Token list) =
     let programNode = Symbols.NonTerminal >> Node.root <| Symbols.Program
